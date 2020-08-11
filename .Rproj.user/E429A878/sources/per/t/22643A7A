@@ -1,0 +1,26 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1594261873979.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3962015188",
+    "id" : "22643A7A",
+    "lastKnownWriteTime" : 1594264613,
+    "last_content_update" : 1594264613819,
+    "path" : "~/Documents/defund/scripts/03_datawrangle.R",
+    "project_path" : "scripts/03_datawrangle.R",
+    "properties" : {
+        "cursorPosition" : "18,0",
+        "scrollLine" : "0",
+        "tempName" : "Untitled1"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

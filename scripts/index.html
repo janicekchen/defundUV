@@ -1,0 +1,440 @@
+<! DOCTYPE html>
+<html>
+	<title>[TITLE]</title>
+	<head>
+		<meta charset= "UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,500;0,900;1,900&display=swap" rel="stylesheet">
+		<script src="https://unpkg.com/intersection-observer@0.5.1/intersection-observer.js"></script>
+		<script src="https://unpkg.com/scrollama"></script>
+		<script src ='https://cdnjs.cloudflare.com/ajax/libs/d3/5.15.0/d3.min.js'></script>
+		<link rel="stylesheet" href="style.css">
+	</head>
+	<body style = "margin: 0">
+		<div id = "header">
+			<h2>______________________</h2>
+			<h1>unpacking town budgets</h1>
+			<h2>upper valley edition</h2><br>
+			<h2>______________________</h2>
+		</div>
+		<div id = "lead" class = "leadendtext">
+			<p>Here's how much <select id = "townSelect"></select> spends on the police: </p>
+		</div>
+		<section id = "scrolly">
+			<div class = "container">
+				<div id = "graph">
+					<figure class = "waffle"></figure>
+				</div>
+			</div>
+
+				<article>
+					<div class = "step" data-step = 0 id = "legendBox">
+						<p id = "policetag"></p>
+					</div>
+					<div class = "step" data-step = 1>
+						<p id = "rectag">$46.44 / person is spent on recreation.</p>
+					</div>
+					<div class = "step" data-step = 2>
+						<p id = "healthtag">And on health services? $0.44 / person.</p>
+					</div>
+					<div class = "step" style = "opacity: 0; margin: 0">
+					</div>
+				</article>
+		</section>
+		<div id = "end" class = "leadendtext">
+			<p>Select another town: <select id = "townSelectEnd"></select></p>
+		</div>
+		<script type = "text/javascript">
+
+
+
+			var townData = "https://gist.githubusercontent.com/janicekchen/40e6e873805cf8fa6385b74657bc42b5/raw/65205e961fa5f96c623b17868c17fd0c3b548a8f/town_budget.csv"
+
+			var activeTown = "Canaan";
+
+
+			var dropdown = d3.selectAll("select")
+
+			// attaching data to option list in dropdown menu
+
+			d3.csv(townData).then(function(data) {
+				dropdown.selectAll("option")
+			        .data(data)
+			        .enter()
+			        .append("option")
+			        .attr("value", function(d) { return d.town; })
+			        .text(function(d) { return d.town; });
+			})
+
+			function updatePolice(town) {
+				d3.csv(townData).then(function(data) {
+					var waffle = d3.select(".waffle")
+
+					// selecting town
+
+					var filtTown = (data.filter(function(d) {
+						return d.town == town;
+					}))[0];
+
+					const windowHeight = window.innerHeight;
+					const windowWidth = window.innerWidth;
+
+					const cont = d3.select(".waffle")
+					               .node()
+					               .getBoundingClientRect()
+
+
+					const recPC = +filtTown.rec / +filtTown.pop;
+					const healthPC = +filtTown.health / +filtTown.pop;
+					const policePC = +filtTown.police / +filtTown.pop;
+
+					const totalPC = recPC + healthPC + policePC;
+					const granthamPC = (+data[4].rec + +data[4].health + +data[4].police) / +data[4].pop;
+
+
+					if (totalPC > granthamPC) {
+						var blockWidth = 20;
+					} else {
+						var blockWidth = 30;
+					}
+
+
+					var margins = 5;
+
+					if (Number.isInteger(cont.width / (blockWidth + margins * 2))) {
+						margins = margins - 1;
+					};
+					
+					const nCol = Math.floor(cont.width / (blockWidth + margins * 2));
+					const nRow = Math.ceil(totalPC / nCol)
+					const containerPadding = d3.select(".container").style("padding-top")
+					const blockHeight = (cont.height / nRow) - (margins * 2) - (containerPadding[0] * 2 / nRow)
+
+					waffle.selectAll("div")
+					      .data(d3.range(policePC))
+					      .enter()
+					      .append("div")
+					      .attr("class", "blockpolice")
+					      .attr("id", function(d) {
+					      	return "index"+ d;
+					      })
+					      .style("margin", margins)
+					      .style("width", blockWidth)
+					      .style("height", blockHeight)
+					      .style("background-color", "#a7cae3");
+
+
+					d3.select("#policetag")
+					  .text("$" + d3.format(".0f")(policePC) + " / person is spent on police.");
+
+					var legendSVG = d3.select("#legendBox")
+					  .append("svg")
+					  .attr("height", blockHeight + 15);
+
+
+					legendSVG.append("rect")
+					  .attr("x", 115)
+					  .attr("y", 2)
+					  .attr("width", blockWidth)
+					  .attr("height", blockHeight)
+					  .style("fill", "#a7cae3")
+					  .style("stroke", "black")
+					  .style("stroke-width", 1);
+
+
+					  var legendText = legendSVG.append("text")
+					                            .attr("class", "legendText")
+					                            .text("= $1");
+
+					  var textHeight = d3.select(".legendText")
+					                     .style("font-size");
+					  
+					  legendText.attr("x", 115 + blockWidth + 10)
+					            .attr("y", blockHeight / 2 + textHeight.slice(0, 2) / 2);
+					           
+
+
+					             
+				});
+			};
+
+			function updateHealth(town) {
+				d3.csv(townData).then(function(data) {
+					var waffle = d3.select(".waffle")
+
+					// selecting town
+
+					var filtTown = (data.filter(function(d) {
+						return d.town == town;
+					}))[0];
+
+					const windowHeight = window.innerHeight;
+					const windowWidth = window.innerWidth;
+
+					const cont = d3.select(".waffle")
+					               .node()
+					               .getBoundingClientRect();
+
+
+					const recPC = +filtTown.rec / +filtTown.pop;
+					const healthPC = +filtTown.health / +filtTown.pop;
+					const policePC = +filtTown.police / +filtTown.pop;
+
+					const totalPC = recPC + healthPC + policePC;
+					const granthamPC = (+data[4].rec + +data[4].health + +data[4].police) / +data[4].pop;
+
+					if (totalPC > granthamPC) {
+						var blockWidth = 20;
+					} else {
+						var blockWidth = 30
+					}
+
+					var margins = 5;
+
+					if (Number.isInteger(cont.width / (blockWidth + margins * 2))) {
+						margins = margins - 1;
+					};
+					
+					const nCol = Math.floor(cont.width / (blockWidth + margins * 2));
+					const nRow = Math.ceil(totalPC / nCol)
+					const containerPadding = d3.select(".container").style("padding-top")
+					const blockHeight = (cont.height / nRow) - (margins * 2) - (containerPadding[0] * 2 / nRow)
+
+
+					if (healthPC < 1 & healthPC > 0) {
+						waffle.append("div")
+						      .attr("class", "blockhealth")
+						      .style("width", healthPC * blockWidth)
+						      .style("height", blockHeight)
+						      .style("margin", 5)
+						      .style("background-color", "#e1b9c1")
+						      .style("margin", margins)
+						      .style("opacity", 0)
+						      .transition()
+						      .duration(750)
+						      .style("opacity", 1)
+
+					} else {
+						waffle.selectAll("div")
+					      .data(d3.range(totalPC))
+					      .enter()
+					      .append("div")
+					      .attr("class", "blockhealth")
+					      .attr("id", function(d) {
+					      	return "index"+ d;
+					      })
+					      .style("width", blockWidth)
+					      .style("height", blockHeight)
+					      .style("margin", margins)
+					      .style("background-color", "#e1b9c1")
+					      .style("opacity", 0)
+					      .transition()
+					      .duration(750)
+					      .style("opacity", 1)
+
+					}
+
+					d3.select("#healthtag")
+					  .text("And on health services? $" + d3.format(".2f")(healthPC) + " / person.")
+					             
+				})
+			};
+
+			function updateRec(town) {
+				d3.csv(townData).then(function(data) {
+					var waffle = d3.select(".waffle")
+
+					// selecting town
+
+					var filtTown = (data.filter(function(d) {
+						return d.town == town;
+					}))[0];
+
+					const windowHeight = window.innerHeight;
+					const windowWidth = window.innerWidth;
+
+					const cont = d3.select(".waffle")
+					               .node()
+					               .getBoundingClientRect();
+
+
+					const recPC = +filtTown.rec / +filtTown.pop;
+					const healthPC = +filtTown.health / +filtTown.pop;
+					const policePC = +filtTown.police / +filtTown.pop;
+
+					const totalPC = recPC + healthPC + policePC;
+					const granthamPC = (+data[4].rec + +data[4].health + +data[4].police) / +data[4].pop;
+
+					if (totalPC > granthamPC) {
+						var blockWidth = 20;
+					} else {
+						var blockWidth = 30;
+					}
+
+					
+					var margins = 5;
+
+					if (Number.isInteger(cont.width / (blockWidth + margins * 2))) {
+						margins = margins - 1;
+					};
+					
+					const nCol = Math.floor(cont.width / (blockWidth + margins * 2));
+					const nRow = Math.ceil(totalPC / nCol)
+					const containerPadding = d3.select(".container").style("padding-top")
+					const blockHeight = (cont.height / nRow) - (margins * 2) - (containerPadding[0] * 2 / nRow)
+
+					if (recPC < 1 & recPC > 0) {
+						waffle.append("div")
+						      .attr("class", "blockrec")
+						      .style("width", blockWidth * recPC)
+						      .style("height", blockHeight)
+						      .style("margin", margins)
+						      .style("background-color", "#c1d5b9")
+						      .style("margin", margins)
+						      .style("opacity", 0)
+						      .transition()
+						      .duration(750)
+						      .style("opacity", 1)
+						      
+					} else {
+						waffle.selectAll("div")
+					      .data(d3.range(policePC + recPC))
+					      .enter()
+					      .append("div")
+					      .attr("class", "blockrec")
+					      .attr("id", function(d) {
+					      	return "index"+ d;
+					      })
+					      .style("width", blockWidth)
+					      .style("height", blockHeight)
+					      .style("margin", margins)
+					      .style("background-color", "#c1d5b9")
+					      .style("opacity", 0)
+					      .transition()
+					      .duration(750)
+					      .style("opacity", 1)
+					}
+
+					d3.select("#rectag")
+					  .text("$" + d3.format(".2f")(recPC) + " / person is spent on recreation.")
+					             
+				})
+			};
+
+			function clear() {
+
+				var waffle = d3.select(".waffle")
+
+				waffle.selectAll("div")
+				      .style("opacity", 1)
+				      .transition()
+				      .duration(500)
+				      .style("opacity", 0)
+				      .remove();
+
+
+				d3.select("#legendBox").select("svg").remove()
+				
+			}
+
+			function clearCategory(classCategory) {
+				d3.selectAll(classCategory)
+				  .style("opacity", 1)
+				  .transition()
+				  .duration(500)
+				  .style("opacity", 0)
+				  .remove();
+			}
+
+			updatePolice("Canaan");
+
+			function removeHash () { 
+			    history.pushState("", document.title, window.location.pathname
+			                                                       + window.location.search);
+			}
+
+			// update with selection 
+
+			d3.select("#townSelect").on("change", function(d) {
+				var selectedTown = d3.select(this).property("value");
+
+				d3.select("#townSelectEnd").property("value", selectedTown);
+
+				activeTown = selectedTown;
+				clear();
+				setTimeout(function() { updatePolice(selectedTown)}, 600);
+			})
+
+			d3.select("#townSelectEnd").on("change", function(d) {
+				var selectedTown = d3.select(this).property("value");
+
+				d3.select("#townSelect").property("value", selectedTown);
+
+				window.location.hash = "lead";
+				removeHash();
+				
+				activeTown = selectedTown;
+				clear();
+				setTimeout(function() { updatePolice(selectedTown)}, 600);
+			})
+		
+
+			// SCROLLAMA
+			var scroll = d3.select("#scrolly");
+			var article = d3.select("article");
+			var step = d3.select(".step");
+
+			var scroller = scrollama();
+
+			function init() { 
+
+				scroller
+					.setup({
+						step: '#scrolly article .step', // step elements
+						offset: 0.8, 
+						debug: false, // display trigger offset
+					})
+					.onStepEnter(handleStepEnter);
+
+			// setup resize event
+				//resize(scrollerLU);
+				//window.addEventListener('resize', resize);
+			};
+
+			function handleStepEnter(response) {
+
+				var el = d3.select(response.element);
+				var dataStep = el.attr('data-step')
+
+
+				if (response.direction == "down") {
+					if (dataStep == 1) {
+						updateRec(activeTown);
+					} 
+					else if (dataStep == 2) {
+						updateHealth(activeTown);
+					}
+				} else {
+					if (dataStep == 2) {
+						clearCategory(".blockhealth");
+					} else if (dataStep == 1) {
+						clearCategory(".blockrec");
+					}
+				}
+			};
+
+			init();
+
+
+
+
+
+
+			
+
+
+
+
+		</script>
+	</body>
+</html
